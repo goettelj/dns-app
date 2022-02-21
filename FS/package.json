@@ -1,0 +1,20 @@
+{
+    "name": "fibonacci-server",
+    "version": "1.0.0",
+    "description": "NYU DCN-2662 Lab 3 Fibonacci Server",
+    "type": "module",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "start:dev": "nodemon server.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Jay Goettelmann",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.17.3"
+    },
+    "devDependencies": {
+        "nodemon": "^2.0.15"
+    }
+}
