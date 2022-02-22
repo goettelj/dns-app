@@ -1,6 +1,7 @@
 'use strict';
 
 import express from 'express';
+import dgram from 'dgram'
 
 // Constants
 const PORT = 8080;
@@ -15,17 +16,37 @@ app.get('/', (req, res) => {
 app.get('/fibonacci', (req, res) => {
     
     // validate correct params
-    console.log(req);
     const query = req.query;
     const number = parseInt(req.query.number);
 
     if ( ! Number.isInteger(number) ){
         res.status(400);
-        res.send("<h2>Invalid Request</h2>");
+        res.send(`<h2>Invalid Number sent: '${req.query.number}'</h2>`);
         return;
     }
     
-   // DNS Stuff
+    const hostname = req.query.hostname;
+    const asIp = req.query.as_ip;
+    const asPort = req.query.as_port;
+
+    // DNS Stuff
+    const client = dgram.createSocket("udp4");
+    const message = `TYPE=A\nNAME=${hostname}\n`;
+    client.send(message, asPort, asIp, (err) => {
+      if (err) {
+        console.log(`error sending query to Authoritative Server: ${err}`);
+        res.status(400);
+        res.send(`Problem sending message to as_ip: ${asIp}, as_port: ${asPort}`);
+        client.close();
+        return;
+      }
+      res.status(201);
+  
+      client.close();
+    });
+
+    //TODO HTTP call to Fibonacci Server
+    res.send("Successfully sent DNS query.  Now how do I get a response??");
     
 });
 
