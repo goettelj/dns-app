@@ -1,22 +1,77 @@
-import dgram from 'dgram';
+import dgram from "dgram";
+import * as fs from "fs/promises";
+import { dnsMessageToJson, findRecordInFile } from "./utils.js";
 
-const server = dgram.createSocket('udp4');
+const server = dgram.createSocket("udp4");
 
 // constants
 const PORT = 53533;
 
-server.on('error', (err) => {
-    console.log(`server error:\n${err.stack}`);
-    server.close();
-  });
+server.on("error", (err) => {
+  console.log(`server error:\n${err.stack}`);
+  server.close();
+});
+
+/**
+ * main handle section
+ */
+server.on("message", async (msg, rinfo) => {
   
-  server.on('message', (msg, rinfo) => {
-    console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
-  });
+  logMessage(msg, rinfo);
+
+  const msgObj = dnsMessageToJson(msg);
+
+  switch (msgObj.msgType){
+    case "REGISTRATION":
+      saveRegistration(msg);
+      break;
+    case "QUERY":
+      const searchString = `NAME=${msgObj.name}`;
+      const record = await findRecordInFile('data.txt', searchString);
+      
+      //TODO return response (UDP? TCP?)
+      console.log(`FOUND DNS RECORD!`);
+      console.log(`${record}`);
+      break;
+    default:
+      console.error("Invalid message received:");
+      logMessage(msg, rinfo);
+  }
+
+});
+
+server.on("listening", () => {
+  const address = server.address();
+  console.log(
+    `Authoritative Server listening ${address.address}:${address.port}`
+  );
+});
+
+server.bind(PORT);
+
+/**
+ * saveRegistration - Write DNS registration as a single line to data.txt
+ * @param {*} msg - Registration text separated by newlines
+ */
+const saveRegistration = async (msg) => {
   
-  server.on('listening', () => {
-    const address = server.address();
-    console.log(`Authoritative Server listening ${address.address}:${address.port}`);
-  });
-  
-  server.bind(PORT);
+  const singleLineMsg = msg.toString().replaceAll(/\n/g, ",");
+
+  try {
+    const file = await fs.open("data.txt", "a");
+
+    await file.write(singleLineMsg);
+    await file.write("\n");
+
+    await file.close();
+  } catch (err) {
+    console.error(`Problem writing DNS entry to datafile: ${err}`);
+  }
+}
+
+function logMessage(msg, rinfo){
+  console.debug("================================");
+  console.debug(new Date());
+  console.debug("================================");
+  console.debug(`server got:\n${msg}\nfrom ${rinfo.address}:${rinfo.port}`);
+}
