@@ -5,26 +5,51 @@ import dgram from "dgram";
 import fibonacci from "./fibonacci.js";
 
 // Constants
+const HOST = "localhost";
 const PORT = 9090;
-const AS_SERVER_PORT = 53533;
-const HOST = "0.0.0.0";
+const DNS_TTL = 10;
 
 // App
 const app = express();
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send(
-    "<h1>NYU Data Communications and Networks Lab 3 - Fibonacci Server</h1>"
-  );
+app.get("/fibonacci", (req, res) => {
+  const number = parseInt(req.query.number);
+
+  // validate input
+  if (!Number.isInteger(number)) {
+    res.status(400);
+    res.send(`${req.query.number} is not an integer.  Please try again.`);
+    return;
+  }
+
+  const result = fibonacci(number);
+
+  res.send(`<h1>${result}</h1>`);
 });
 
 app.put("/register", (req, res) => {
-  res.send("<h1>Registering the host</h1>");
-
   const client = dgram.createSocket("udp4");
-  client.send("Hello Socket World!", AS_SERVER_PORT, "localhost", (err) => {
-    console.log(`error sending message to Authoritative Server: ${err}`)
+
+  const body = req.body;
+  const hostname = body.hostname;
+  const ip = body.ip;
+  const authoritativeServerIp = body['as_ip'];
+  const authoritativeServerPort = body['as_port'];
+
+  const message = `TYPE=A\nNAME=${hostname}\nVALUE=${ip}\nTTL=${DNS_TTL}`;
+
+  client.send(message, authoritativeServerPort, authoritativeServerIp, (err) => {
+    if (err) {
+      console.log(`error sending message to Authoritative Server: ${err}`);
+      res.status(400);
+      res.send(`Problem sending message to as_ip: ${authoritativeServerIp}, as_port: ${authoritativeServerPort}`);
+      client.close();
+      return;
+    }
+    res.status(201);
+    res.send(`Successfully registered hostname ${hostname}`);
+
     client.close();
   });
 });
