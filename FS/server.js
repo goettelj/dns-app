@@ -5,7 +5,7 @@ import dgram from "dgram";
 import fibonacci from "./fibonacci.js";
 
 // Constants
-const HOST = "localhost";
+const HOST = "127.0.0.1";
 const PORT = 9090;
 const DNS_TTL = 10;
 
@@ -54,5 +54,5 @@ app.put("/register", (req, res) => {
   });
 });
 
-app.listen(PORT, HOST);
+app.listen(PORT);
 console.log(`Fibonacci Server running on http://${HOST}:${PORT}`);
