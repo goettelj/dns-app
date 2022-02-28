@@ -12,7 +12,7 @@
     },
     "scripts": {
         "start": "node server.js",
-        "start:dev": "nodemon server.js",
+        "start:dev": "nodemon --watch . ./server.js",
         "test": "NODE_OPTIONS='--experimental-vm-modules' jest --watch"
     },
     "dependencies": {
