@@ -102,3 +102,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+# DCN Lab 3
+AS/data.txt
